@@ -1,3 +1,3 @@
 # CoverBot
-# Brief
+## Brief
 A monitor and execute stop loss trade package with Shioaji API

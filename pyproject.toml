@@ -16,7 +16,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Office/Business :: Financial :: Investment",
 ]
-
+readme = "README.md"
 dynamic = ["version", "description"]
 dependencies = [
     "shioaji",
