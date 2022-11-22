@@ -17,7 +17,6 @@ class CoverBot:
     def set_stop_loss_pct(self, code: str):
         contract = self.api.Contracts.Stocks[code]
         deal = self.deals[code] = self.deals.get(code, Deal(contract))
-        deal.
 
     def show(self):
         return [v.to_dict() for _, v in self.deals.items()]
