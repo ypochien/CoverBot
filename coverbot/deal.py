@@ -31,7 +31,7 @@ class Deal:
         self.stop_price: float = 0.0
         self.first_action: Optional[Action] = None
         self.entry_price: float = 0.0
-        self.stop_loss_pct: float = 0.09
+        self.stop_loss_pct: float = 0.03
         self.buy_collection: List[TFTDeal] = []
         self.sell_collection: List[TFTDeal] = []
 
@@ -88,3 +88,8 @@ class Deal:
                 else self.sell_quantity
             )
             self.entry_price = self.amount / quantity / 1000.0
+            stop_dvalue = self.entry_price * self.stop_loss_pct
+            if self.first_action == Action.Buy:
+                self.stop_price = self.entry_price - stop_dvalue
+            elif self.first_action == Action.Sell:
+                self.stop_price = self.entry_price + stop_dvalue
