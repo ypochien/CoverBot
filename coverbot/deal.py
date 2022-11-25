@@ -1,7 +1,11 @@
+from loguru import logger
 from typing import Dict, List, Optional
+import math
+import polars as pl
 from dataclasses import dataclass, field, fields
 from shioaji.constant import OrderState, Action, StockOrderCond
 from shioaji.contracts import Contract
+from shioaji import Exchange, QuoteSTKv1
 
 
 @dataclass
@@ -46,25 +50,51 @@ class Deal:
             "contract": f"{self.contract.code} {self.contract.name}",
             "action": self.first_action,
             "quantity": self.quantity,
+            "amount": self.amount,
             "entry_price": self.entry_price,
+            "stop_price": self.stop_price,
             "buy_records": len(self.buy_collection),
             "sell_records": len(self.sell_collection),
         }
         return d
 
-    # def __dict__(self):
-
-    def __str__(self) -> str:
-        return str(
-            {
-                "contract": f"{self.contract.code} {self.contract.name}",
-                "action": self.first_action,
-                "quantity": self.quantity,
-                "entry_price": self.entry_price,
-                "buy_records": len(self.buy_collection),
-                "sell_records": len(self.sell_collection),
-            }
+    def df(self):
+        df = (
+            pl.DataFrame(data=[d for d in self.buy_collection + self.sell_collection])
+            .select(pl.col(["code", "name", "action", "price", "quantity", "ordno"]))
+            .with_columns(
+                [(pl.col("price") * pl.col("quantity") * 1000).alias("amount")]
+            )
+            .groupby(
+                [pl.col("code"), pl.col("name"), pl.col("ordno"), pl.col("action")]
+            )
+            .agg([pl.col("quantity").sum(), pl.col("amount").sum()])
+            .with_columns(
+                [
+                    (pl.col("amount") * 0.001425 * 0.2).apply(math.floor).alias("fee"),
+                    (
+                        pl.when(pl.col("action") == "Sell")
+                        .then((pl.col("amount") * 0.0015).apply(math.floor))
+                        .otherwise(0)
+                        .alias("tax")
+                    ),
+                ]
+            )
         )
+
+    def apply_quote(self, exchange: Exchange, quote: QuoteSTKv1):
+        if quote.simtrade == 0 and quote.volume > 0:
+            if self.first_action == Action.Sell and quote.close >= self.stop_price:
+                logger.info(
+                    f"[{self.contract.code} {self.contract.name}] 均價 {self.entry_price} {self.quantity}張  賣單停損買回 現價 {quote.close} >= 停損價 {self.stop_price}"
+                )
+                return "place order sell"
+            elif self.first_action == Action.Buy:
+                logger.info(
+                    f"[{self.contract.code} {self.contract.name}] 均價 {self.entry_price} {self.quantity}張  買單停損賣出 現價 {quote.close} <= 停損價 {self.stop_price}"
+                )
+                return "place order buy"
+        return "nothing"
 
     def apply(self, tftdeal: Dict):
         deal = TFTDeal(**tftdeal)

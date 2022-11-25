@@ -16,9 +16,10 @@ class CoverBot:
         self.api.quote.set_on_quote_stk_v1_callback(self.quote_handler)
         self.deals: Dict[str, Deal] = {}
 
-    def set_stop_loss_pct(self, code: str):
+    def set_stop_loss_pct(self, code: str, value: float):
         contract = self.api.Contracts.Stocks[code]
         deal = self.deals[code] = self.deals.get(code, Deal(contract))
+        deal.stop_loss_pct = value
 
     def show(self):
         return [v.to_dict() for _, v in self.deals.items()]
@@ -44,16 +45,11 @@ class CoverBot:
             self.subscribe_quote(msg["code"])
         if order_state == OrderState.TFTDeal:
             self.deal_action(msg)
+        elif order_state == OrderState.TFTOrder:
+            pass
 
     def quote_handler(self, exchange: Exchange, quote: QuoteSTKv1):
-        if quote.simtrade == 0 and quote.volume > 0:
-            deal = self.deals.get(quote.code)
-            if deal:
-                if deal.first_action == Action.Buy and quote.close >= deal.stop_price:
-                    logger.info(
-                        f"{deal.contract.code} {deal.contract.name} 賣單 現價 {quote.close} >= 停損價 {deal.stop_price}/{deal.entry_price} {deal.quantity}張"
-                    )
-                elif deal.first_action == Action.Sell:
-                    logger.info(
-                        f"{deal.contract.code} {deal.contract.name} 買單 現價 {quote.close} <= 停損價 {deal.stop_price}/{deal.entry_price} {deal.quantity}張"
-                    )
+        deal = self.deals.get(quote.code)
+        if deal:
+            return deal.apply_quote(exchange, quote)
+        return None
