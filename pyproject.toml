@@ -21,6 +21,7 @@ dynamic = ["version", "description"]
 dependencies = [
     "shioaji",
     "loguru",
+    "polars"
 ]
 
 [project.urls]
