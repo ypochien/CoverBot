@@ -41,12 +41,13 @@ class CoverBot:
         )
 
     def order_handler(self, order_state: OrderState, msg: Dict) -> None:
-        if msg["code"] not in self.deals.keys():
-            self.subscribe_quote(msg["code"])
         if order_state == OrderState.TFTDeal:
+            if msg["code"] not in self.deals.keys():
+                self.subscribe_quote(msg["code"])
             self.deal_action(msg)
         elif order_state == OrderState.TFTOrder:
-            pass
+            if msg["contract"]["code"] not in self.deals.keys():
+                self.subscribe_quote(msg["code"])
 
     def quote_handler(self, exchange: Exchange, quote: QuoteSTKv1):
         deal = self.deals.get(quote.code)
