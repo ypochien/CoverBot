@@ -52,5 +52,7 @@ class CoverBot:
     def quote_handler(self, exchange: Exchange, quote: QuoteSTKv1):
         deal = self.deals.get(quote.code)
         if deal:
-            return deal.apply_quote(exchange, quote)
+            result = deal.apply_quote(exchange, quote)
+            logger.info(result)
+            return result
         return None

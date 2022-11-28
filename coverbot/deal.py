@@ -29,6 +29,7 @@ class TFTDeal:
 class Deal:
     def __init__(self, contract: Contract):
         self.contract: Contract = contract
+        self.is_cover: bool = False
         self.buy_quantity: int = 0
         self.sell_quantity: int = 0
         self.amount: float = 0
@@ -83,16 +84,20 @@ class Deal:
         )
 
     def apply_quote(self, exchange: Exchange, quote: QuoteSTKv1):
+        if self.is_cover == True:
+            return "is recoverd"
         if quote.simtrade == 0 and quote.volume > 0:
             if self.first_action == Action.Sell and quote.close >= self.stop_price:
                 logger.info(
                     f"[{self.contract.code} {self.contract.name}] 均價 {self.entry_price} {self.quantity}張  賣單停損買回 現價 {quote.close} >= 停損價 {self.stop_price}"
                 )
+                self.is_cover = True
                 return "place order sell"
             elif self.first_action == Action.Buy:
                 logger.info(
                     f"[{self.contract.code} {self.contract.name}] 均價 {self.entry_price} {self.quantity}張  買單停損賣出 現價 {quote.close} <= 停損價 {self.stop_price}"
                 )
+                self.is_cover = True
                 return "place order buy"
         return "nothing"
 
