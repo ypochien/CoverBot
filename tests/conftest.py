@@ -81,7 +81,7 @@ def quote_data():
 
 @pytest.fixture
 def mock_api() -> sj.Shioaji:
-    api: sj.Shioaji = sj.Shioaji()
+    api: sj.Shioaji = sj.Shioaji(simulation=False)
     with open(contract_filename, "rb") as f:
         api.Contracts = pickle.load(f)
     return api

@@ -96,12 +96,14 @@ def test_coverbot_set_stop_loss_pct(cover_bot: CoverBot):
 
 
 def test_in_deal_quote_should_be_(
-    cover_bot: CoverBot, quote_data: Tuple[Exchange, QuoteSTKv1]
+    cover_bot: CoverBot, mock_api, quote_data: Tuple[Exchange, QuoteSTKv1], mocker
 ):
     cover_bot.deal_action(deal_sell)
     exchange, quote = quote_data
     quote.code = "5871"
+    mocker_place_order = mocker.patch.object(mock_api, "place_order")
     result = cover_bot.quote_handler(exchange=exchange, quote=quote)  # type: ignore
+    mocker_place_order.assert_called_once()
     assert result == True
 
 
