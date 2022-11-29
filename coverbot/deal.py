@@ -85,21 +85,23 @@ class Deal:
 
     def apply_quote(self, exchange: Exchange, quote: QuoteSTKv1):
         if self.is_cover == True:
-            return "is recoverd"
+            return False
         if quote.simtrade == 0 and quote.volume > 0:
+            if self.quantity == 0:
+                return False
             if self.first_action == Action.Sell and quote.close >= self.stop_price:
                 logger.info(
-                    f"[{self.contract.code} {self.contract.name}] 均價 {self.entry_price} {self.quantity}張  賣單停損買回 現價 {quote.close} >= 停損價 {self.stop_price}"
+                    f"[{self.contract.code} {self.contract.name}] 均價 {round(self.entry_price,2)} {self.quantity}張  賣單停損買回 現價 {quote.close} >= 停損價 {self.stop_price}"
                 )
                 self.is_cover = True
-                return "place order sell"
+                return True
             elif self.first_action == Action.Buy:
                 logger.info(
-                    f"[{self.contract.code} {self.contract.name}] 均價 {self.entry_price} {self.quantity}張  買單停損賣出 現價 {quote.close} <= 停損價 {self.stop_price}"
+                    f"[{self.contract.code} {self.contract.name}] 均價 {round(self.entry_price)} {self.quantity}張  買單停損賣出 現價 {quote.close} <= 停損價 {self.stop_price}"
                 )
                 self.is_cover = True
-                return "place order buy"
-        return "nothing"
+                return True
+        return False
 
     def apply(self, tftdeal: Dict):
         deal = TFTDeal(**tftdeal)
@@ -122,8 +124,8 @@ class Deal:
                 if self.first_action == Action.Buy
                 else self.sell_quantity
             )
-            self.entry_price = self.amount / quantity / 1000.0
-            stop_dvalue = self.entry_price * self.stop_loss_pct
+            self.entry_price = round(self.amount / quantity / 1000.0, 2)
+            stop_dvalue = round(self.entry_price * self.stop_loss_pct, 2)
             if self.first_action == Action.Buy:
                 self.stop_price = self.entry_price - stop_dvalue
             elif self.first_action == Action.Sell:

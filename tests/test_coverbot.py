@@ -83,7 +83,7 @@ def test_non_deal_quote_should_be_None(
 ):
     exchange, quote = quote_data
     result = cover_bot.quote_handler(exchange=exchange, quote=quote)  # type: ignore
-    assert result == None
+    assert result == False
 
 
 def test_coverbot_set_stop_loss_pct(cover_bot: CoverBot):
@@ -102,7 +102,7 @@ def test_in_deal_quote_should_be_(
     exchange, quote = quote_data
     quote.code = "5871"
     result = cover_bot.quote_handler(exchange=exchange, quote=quote)  # type: ignore
-    assert result == "place order sell"
+    assert result == True
 
 
 def test_tftorder(cover_bot: CoverBot):

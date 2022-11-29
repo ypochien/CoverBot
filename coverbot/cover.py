@@ -4,7 +4,15 @@ from dataclasses import dataclass, field, fields
 import shioaji as sj
 from shioaji.contracts import Contract
 
-from shioaji.constant import OrderState, Action, StockOrderCond, QuoteType, QuoteVersion
+from shioaji.constant import (
+    OrderState,
+    Action,
+    StockOrderCond,
+    QuoteType,
+    QuoteVersion,
+    TFTStockPriceType,
+    TFTOrderType,
+)
 from .deal import TFTDeal, Deal
 from shioaji import QuoteSTKv1, Exchange
 
@@ -54,5 +62,29 @@ class CoverBot:
     def quote_handler(self, exchange: Exchange, quote: QuoteSTKv1):
         deal = self.deals.get(quote.code)
         if deal:
-            return deal.apply_quote(exchange, quote)
-        return None
+            need_cover = deal.apply_quote(exchange, quote)
+            if need_cover:
+                self.cover_order(deal)
+            return need_cover
+        return False
+
+    def cover_order(self, deal: Deal):
+        contract = deal.contract
+
+        action, price = (
+            (Action.Sell, contract.limit_down)
+            if deal.first_action == Action.Buy
+            else (Action.Buy, contract.limit_up)
+        )
+        logger.info(f"{action} {price} {deal.quantity}")
+
+        order = sj.Order(
+            price=price,
+            quantity=abs(deal.quantity),
+            action=action,
+            price_type=TFTStockPriceType.LMT,
+            order_type=TFTOrderType.ROD,
+            custom_field="Cover",
+        )
+        self.api.place_order(contract, order, timeout=0)
+        logger.info(f"{contract.code} {contract.name} | {order}")
