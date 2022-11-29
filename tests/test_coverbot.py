@@ -103,3 +103,8 @@ def test_in_deal_quote_should_be_(
     quote.code = "5871"
     result = cover_bot.quote_handler(exchange=exchange, quote=quote)  # type: ignore
     assert result == "place order sell"
+
+
+def test_tftorder(cover_bot: CoverBot):
+    tftorder = {"contract": {"code": "5871"}}
+    cover_bot.order_handler(OrderState.TFTOrder, tftorder)
