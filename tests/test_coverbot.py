@@ -66,16 +66,20 @@ def test_deal_action(cover_bot: CoverBot):
     assert cover_bot.deals[deal_buy["code"]].quantity == -1
 
 
-def test_deal_date(cover_bot: CoverBot):
+def test_deal_date(cover_bot: CoverBot, mocker):
+    mocker_place_order = mocker.patch.object(cover_bot.api.quote, "subscribe")
     cover_bot.order_handler(OrderState.TFTDeal, deal_buy)
+    mocker_place_order.assert_called_once()
     assert cover_bot.deals[deal_buy["code"]].quantity == 1
 
 
-def test_show(cover_bot: CoverBot, deal_data):
+def test_show(cover_bot: CoverBot, deal_data, mocker):
+    mocker_place_order = mocker.patch.object(cover_bot.api.quote, "subscribe")
+
     for deal in deal_data:
         if deal["action"] == "Sell":
             cover_bot.order_handler(OrderState.TFTDeal, deal)
-    logger.info(cover_bot.show())
+    # logger.info(cover_bot.show())
 
 
 def test_non_deal_quote_should_be_None(
@@ -105,8 +109,12 @@ def test_in_deal_quote_should_be_(
     result = cover_bot.quote_handler(exchange=exchange, quote=quote)  # type: ignore
     mocker_place_order.assert_called_once()
     assert result == True
+    result = cover_bot.quote_handler(exchange=exchange, quote=quote)  # type: ignore
+    result = cover_bot.quote_handler(exchange=exchange, quote=quote)  # type: ignore
+    result = cover_bot.quote_handler(exchange=exchange, quote=quote)  # type: ignore
 
 
-def test_tftorder(cover_bot: CoverBot):
+def test_tftorder(cover_bot: CoverBot, mocker):
+    mocker_place_order = mocker.patch.object(cover_bot.api.quote, "subscribe")
     tftorder = {"contract": {"code": "5871"}}
     cover_bot.order_handler(OrderState.TFTOrder, tftorder)
