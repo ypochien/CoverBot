@@ -76,15 +76,24 @@ class CoverBot:
             if deal.first_action == Action.Buy
             else (Action.Buy, contract.limit_up)
         )
-        logger.info(f"{action} {price} {deal.quantity}")
+        cover_qty = deal.cover_quantity()
+
+        # logger.info(f"{action} {price} {cover_qty}")
+        if cover_qty == 0:
+            logger.info(
+                f"No action CoverQty == 0 | {action} {price} [{deal.quantity} * {deal.cover_ratio}]]"
+            )
+            return
 
         order = sj.Order(
             price=price,
-            quantity=abs(deal.quantity),
+            quantity=cover_qty,
             action=action,
             price_type=TFTStockPriceType.LMT,
             order_type=TFTOrderType.ROD,
             custom_field="Cover",
         )
         self.api.place_order(contract, order, timeout=0)
-        logger.info(f"{contract.code} {contract.name} | {order}")
+        logger.info(
+            f"{contract.code} {contract.name} | {order.account.person_id} {order.account.username} {order.action} {order.price} {order.quantity} "
+        )

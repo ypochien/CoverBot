@@ -30,6 +30,7 @@ class Deal:
     def __init__(self, contract: Contract):
         self.contract: Contract = contract
         self.is_cover: bool = False
+        self.cover_ratio: float = 1.0
         self.buy_quantity: int = 0
         self.sell_quantity: int = 0
         self.amount: float = 0
@@ -91,17 +92,20 @@ class Deal:
                 return False
             if self.first_action == Action.Sell and quote.close >= self.stop_price:
                 logger.info(
-                    f"[{self.contract.code} {self.contract.name}] 均價 {round(self.entry_price,2)} {self.quantity}張  賣單停損買回 現價 {quote.close} >= 停損價 {self.stop_price}"
+                    f"[{self.contract.code} {self.contract.name}] 均價 {round(self.entry_price,2)} {self.quantity}*{self.cover_ratio}={self.quantity*self.cover_ratio} 張  賣單停損買回 現價 {quote.close} >= 停損價 {self.stop_price}"
                 )
                 self.is_cover = True
                 return True
             elif self.first_action == Action.Buy:
                 logger.info(
-                    f"[{self.contract.code} {self.contract.name}] 均價 {round(self.entry_price)} {self.quantity}張  買單停損賣出 現價 {quote.close} <= 停損價 {self.stop_price}"
+                    f"[{self.contract.code} {self.contract.name}] 均價  {round(self.entry_price,2)} {self.quantity}*{self.cover_ratio}={self.quantity*self.cover_ratio} 張  買單停損賣出 現價 {quote.close} <= 停損價 {self.stop_price}"
                 )
                 self.is_cover = True
                 return True
         return False
+
+    def cover_quantity(self) -> int:
+        return math.floor(abs(self.quantity) * self.cover_ratio)
 
     def apply(self, tftdeal: Dict):
         deal = TFTDeal(**tftdeal)
