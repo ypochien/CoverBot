@@ -94,9 +94,9 @@ def test_coverbot_set_stop_loss_pct(cover_bot: CoverBot):
     cover_bot.deal_action(deal_sell)
     code = deal_sell["code"]
     deal = cover_bot.deals[code]
-    assert deal.stop_loss_pct == 0.03
-    cover_bot.set_stop_loss_pct(code, 0.05)
     assert deal.stop_loss_pct == 0.05
+    cover_bot.set_stop_loss_pct(code, 0.03)
+    assert deal.stop_loss_pct == 0.03
 
 
 def test_in_deal_quote_should_be_(
@@ -118,3 +118,17 @@ def test_tftorder(cover_bot: CoverBot, mocker):
     mocker_place_order = mocker.patch.object(cover_bot.api.quote, "subscribe")
     tftorder = {"contract": {"code": "5871"}}
     cover_bot.order_handler(OrderState.TFTOrder, tftorder)
+
+
+def test_coverquy(
+    cover_bot: CoverBot, mock_api, quote_data: Tuple[Exchange, QuoteSTKv1], mocker
+):
+    cover_bot.deal_action(deal_sell)
+    exchange, quote = quote_data
+    # quote.code = "5871"
+    deal = cover_bot.deals["5871"]
+    assert deal.cover_quantity() == 1
+    deal.cover_ratio = 0.5
+    assert deal.cover_quantity() == 0
+    deal.sell_quantity = 18
+    assert deal.cover_quantity() == 9

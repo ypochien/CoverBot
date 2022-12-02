@@ -82,6 +82,12 @@ def quote_data():
 @pytest.fixture
 def mock_api() -> sj.Shioaji:
     api: sj.Shioaji = sj.Shioaji(simulation=False)
+    api.stock_account = sj.Account(
+        account_type=sj.account.AccountType.Stock,
+        person_id="A123456789",
+        broker_id="9A9X",
+        account_id="1234567",
+    )
     with open(contract_filename, "rb") as f:
         api.Contracts = pickle.load(f)
     return api
