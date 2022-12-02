@@ -22,6 +22,7 @@ class CoverBot:
         self.api: sj.Shioaji = api
         self.api.set_order_callback(self.order_handler)
         self.api.quote.set_on_quote_stk_v1_callback(self.quote_handler)
+        self.default_stop_loss = 0.05
         self.deals: Dict[str, Deal] = {}
 
     def set_stop_loss_pct(self, code: str, value: float):
@@ -39,6 +40,7 @@ class CoverBot:
             logger.warning(f"[{code}] not exist.")
         else:
             deal = self.deals[code] = self.deals.get(code, Deal(contract))
+            deal.stop_loss_pct = self.default_stop_loss
             deal.apply(tftdeal)
 
     def subscribe_quote(self, code: str):
@@ -95,5 +97,5 @@ class CoverBot:
         )
         self.api.place_order(contract, order, timeout=0)
         logger.info(
-            f"{contract.code} {contract.name} | {order.account.person_id} {order.account.username} {order.action} {order.price} {order.quantity} "
+            f"{contract.code} {contract.name} | {__name__} {order.action} {order.price} {order.quantity} "
         )

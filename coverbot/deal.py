@@ -37,7 +37,7 @@ class Deal:
         self.stop_price: float = 0.0
         self.first_action: Optional[Action] = None
         self.entry_price: float = 0.0
-        self.stop_loss_pct: float = 0.03
+        self.stop_loss_pct: float = 0.05
         self.buy_collection: List[TFTDeal] = []
         self.sell_collection: List[TFTDeal] = []
 
